@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Transcript {
+  id          String   @id @default(uuid())
+  videoId     String   @unique
+  url         String
+  title       String
+  duration    Int
+  fetchedAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  languages   Language[]
+  segments    Segment[]
+  history     History[]
+
+  @@index([videoId])
+}
+
+model Language {
+  id           String   @id @default(uuid())
+  code         String
+  name         String
+  type         String   // 'manual' | 'auto' | 'translated'
+  isDefault    Boolean  @default(false)
+
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+
+  @@unique([transcriptId, code])
+}
+
+model Segment {
+  id           String   @id @default(uuid())
+  start        Float
+  duration     Float
+  text         String
+  languageCode String
+
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+
+  @@index([transcriptId, languageCode])
+}
+
+model History {
+  id           String   @id @default(uuid())
+  videoId      String
+  url          String
+  title        String
+  thumbnail    String?
+  viewedAt     DateTime @default(now())
+  lastPosition Float?
+
+  transcriptId String?
+  transcript   Transcript? @relation(fields: [transcriptId], references: [id], onDelete: SetNull)
+
+  @@index([viewedAt])
+}
+
+model Settings {
+  id               String   @id @default("default")
+  theme            String   @default("system")
+  defaultLanguage  String   @default("ja")
+  timestampFormat  String   @default("mm:ss")
+  copyFormat       String   @default("plain")
+  autoSave         Boolean  @default(true)
+  maxHistoryItems  Int      @default(50)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
