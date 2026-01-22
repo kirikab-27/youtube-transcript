@@ -32,21 +32,23 @@ async function fetchYouTubeTranscript(videoId: string, languageCode?: string) {
   console.log(`[Transcript] Fetching transcript for videoId: ${videoId}, language: ${languageCode || 'auto'}`)
 
   // 1. Player API から字幕トラック情報を取得
+  // ANDROIDクライアントを使用（データセンターIPでも字幕取得可能）
   const playerResponse = await fetch(
     `https://www.youtube.com/youtubei/v1/player?key=${INNERTUBE_API_KEY}`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12; GB) gzip',
       },
       body: JSON.stringify({
         context: {
           client: {
             hl: languageCode || 'ja',
             gl: 'JP',
-            clientName: 'WEB',
-            clientVersion: '2.20231219.04.00',
+            clientName: 'ANDROID',
+            clientVersion: '17.36.4',
+            androidSdkVersion: 31,
           },
         },
         videoId: videoId,
@@ -104,7 +106,7 @@ async function fetchYouTubeTranscript(videoId: string, languageCode?: string) {
 
   const captionResponse = await fetch(captionUrl, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12; GB) gzip',
     },
   })
 
