@@ -29,6 +29,8 @@ function extractVideoId(url: string): string | null {
 
 // Innertube Player API を使用した字幕取得
 async function fetchYouTubeTranscript(videoId: string, languageCode?: string) {
+  console.log(`[Transcript] Fetching transcript for videoId: ${videoId}, language: ${languageCode || 'auto'}`)
+
   // 1. Player API から字幕トラック情報を取得
   const playerResponse = await fetch(
     `https://www.youtube.com/youtubei/v1/player?key=${INNERTUBE_API_KEY}`,
@@ -52,11 +54,16 @@ async function fetchYouTubeTranscript(videoId: string, languageCode?: string) {
     }
   )
 
+  console.log(`[Transcript] Player API response status: ${playerResponse.status}`)
+
   if (!playerResponse.ok) {
+    const errorText = await playerResponse.text()
+    console.error(`[Transcript] Player API error: ${playerResponse.status}`, errorText.substring(0, 500))
     throw new Error(`Player API error: ${playerResponse.status}`)
   }
 
   const playerData = await playerResponse.json()
+  console.log(`[Transcript] Video title: ${playerData.videoDetails?.title || 'N/A'}`)
 
   // 動画タイトルを取得
   const title = playerData.videoDetails?.title || `YouTube Video ${videoId}`
@@ -65,6 +72,8 @@ async function fetchYouTubeTranscript(videoId: string, languageCode?: string) {
   // 字幕トラックを取得
   const captions = playerData.captions?.playerCaptionsTracklistRenderer
   const tracks = captions?.captionTracks || []
+
+  console.log(`[Transcript] Found ${tracks.length} caption tracks`)
 
   if (tracks.length === 0) {
     throw new Error('この動画には字幕が存在しません')
@@ -91,13 +100,19 @@ async function fetchYouTubeTranscript(videoId: string, languageCode?: string) {
 
   // 2. 字幕データを取得 (JSON3形式)
   const captionUrl = selectedTrack.baseUrl + '&fmt=json3'
+  console.log(`[Transcript] Fetching caption from: ${captionUrl.substring(0, 100)}...`)
+
   const captionResponse = await fetch(captionUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     },
   })
 
+  console.log(`[Transcript] Caption response status: ${captionResponse.status}`)
+
   if (!captionResponse.ok) {
+    const errorText = await captionResponse.text()
+    console.error(`[Transcript] Caption fetch error: ${captionResponse.status}`, errorText.substring(0, 500))
     throw new Error(`Caption fetch error: ${captionResponse.status}`)
   }
 
